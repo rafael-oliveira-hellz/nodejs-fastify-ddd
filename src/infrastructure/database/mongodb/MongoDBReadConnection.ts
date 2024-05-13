@@ -7,19 +7,29 @@ export class MongoDBReadConnection implements IReadDatabaseConnection {
   private db: Db | null = null;
 
   constructor(private uri: string) {
-    const client = new MongoClient(this.uri);
-    client.connect().then(() => {
-      this.db = client.db();
-    });
+    this.connect();
   }
+
+  private async connect() {
+    const client = new MongoClient(this.uri);
+    try {
+      await client.connect();
+      this.db = client.db();
+    } catch (error) {
+      console.error("Error connecting to MongoDB:", error);
+      throw error;
+    }
+  }
+
   async findById<T>(
     tableOrCollection: string,
     id: string | number
   ): Promise<T | null> {
-    if (!this.db) throw new Error("Database not connected");
-    const doc = await this.db
-      .collection(tableOrCollection)
-      .findOne({ _id: new ObjectId(id.toString()) });
+    await this.ensureConnected();
+
+    const doc = await this.db!.collection(tableOrCollection).findOne({
+      _id: new ObjectId(id.toString()),
+    });
 
     if (!doc) return null;
 
@@ -31,10 +41,11 @@ export class MongoDBReadConnection implements IReadDatabaseConnection {
     tableOrCollection: string,
     criteria: Partial<T>
   ): Promise<T | null> {
-    if (!this.db) throw new Error("Database not connected");
-    const result = await this.db
-      .collection(tableOrCollection)
-      .findOne(criteria);
+    await this.ensureConnected();
+
+    const result = await this.db!.collection(tableOrCollection).findOne(
+      criteria
+    );
 
     if (result) {
       return result as T;
@@ -47,11 +58,17 @@ export class MongoDBReadConnection implements IReadDatabaseConnection {
     tableOrCollection: string,
     criteria: Partial<T>
   ): Promise<T[]> {
-    if (!this.db) throw new Error("Database not connected");
-    const results = await this.db
-      .collection(tableOrCollection)
+    await this.ensureConnected();
+
+    const results = await this.db!.collection(tableOrCollection)
       .find(criteria)
       .toArray();
     return results as T[];
+  }
+
+  private async ensureConnected() {
+    if (!this.db) {
+      throw new Error("Database not connected");
+    }
   }
 }

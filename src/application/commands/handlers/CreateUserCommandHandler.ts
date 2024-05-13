@@ -19,6 +19,6 @@ export class CreateUserCommandHandler {
     const { username, email, password } = command.dto;
     const user = new User(username, email, password);
 
-    await this.userRepository.create(user);
+    return this.userRepository.create(user);
   }
 }

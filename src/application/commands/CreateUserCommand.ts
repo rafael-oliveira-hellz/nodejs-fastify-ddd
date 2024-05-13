@@ -2,5 +2,8 @@
 import { CreateUserDTO } from "../dtos/CreateUserDTO";
 
 export class CreateUserCommand {
-  constructor(public readonly dto: CreateUserDTO) {}
+  dto: CreateUserDTO;
+  constructor(dto: CreateUserDTO) {
+    this.dto = dto;
+  }
 }

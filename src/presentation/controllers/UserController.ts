@@ -1,15 +1,13 @@
 import { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
-import DIContainer from "../../shared/DIContainer";
+import { makeCreateUserUseCaseFactory } from "../../application/useCases/factories/CreateUserFactory";
 import { CreateUserDTO } from "./../../application/dtos/CreateUserDTO";
-import { ICreateUserUsecase } from "./../../application/useCases/ICreateUserUsecase";
 
 export async function userRoutes(fastify: FastifyInstance, _options: unknown) {
   fastify.post(
     "/users",
     async (request: FastifyRequest, reply: FastifyReply) => {
       const dto: CreateUserDTO = request.body as CreateUserDTO;
-      const createUserUseCase =
-        DIContainer.resolve<ICreateUserUsecase>("CreateUserUseCase");
+      const createUserUseCase = makeCreateUserUseCaseFactory();
 
       try {
         await createUserUseCase.execute(dto);
