@@ -1,0 +1,27 @@
+{
+  "name": "nodejs-fastify-ddd-2",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@fastify/request-context": "^5.1.0",
+    "amqplib": "^0.10.4",
+    "fastify": "^4.27.0",
+    "memcached": "^2.2.2",
+    "mongodb": "^6.6.1",
+    "pg": "^8.11.5",
+    "redis": "^4.6.13"
+  },
+  "devDependencies": {
+    "@types/amqplib": "^0.10.5",
+    "@types/memcached": "^2.2.10",
+    "@types/pg": "^8.11.6",
+    "typescript": "^5.4.5"
+  }
+}
