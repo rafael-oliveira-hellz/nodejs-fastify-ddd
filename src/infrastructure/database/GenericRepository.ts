@@ -8,15 +8,13 @@ export class GenericRepository<T> {
     private dbConnection: ITransactional &
       IReadRepository<T> &
       IWriteRepository<T>,
-    private collectionName: string // This parameter should already be here as per previous setup
+    private collectionName: string
   ) {}
 
   async create(entity: T): Promise<void> {
-    // Use the collection name provided during the instantiation of the repository
     await this.dbConnection.create(this.collectionName, entity);
   }
 
-  // Adjust other methods similarly
   async update(id: string | number, entity: Partial<T>): Promise<void> {
     await this.dbConnection.update(this.collectionName, id, entity);
   }
