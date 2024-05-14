@@ -1,7 +1,5 @@
-import { IReadRepository } from "../../database/interfaces/IReadRepository";
-import { IWriteRepository } from "../../database/interfaces/IWriteRepository";
+import { GenericRepository } from "../../database/GenericRepository";
 
 export interface IRepositoryFactory {
-  createReadRepository<T>(tableOrCollection: string): IReadRepository<T>;
-  createWriteRepository<T>(tableOrCollection: string): IWriteRepository<T>;
+  createRepository<T>(tableOrCollection: string): GenericRepository<T>;
 }

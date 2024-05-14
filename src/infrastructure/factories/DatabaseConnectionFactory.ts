@@ -1,38 +1,42 @@
-import { IReadDatabaseConnection } from "../database/interfaces/IReadDatabaseConnection";
-import { IWriteDatabaseConnection } from "../database/interfaces/IWriteDatabaseConnection";
-import { MongoDBReadConnection } from "../database/mongodb/MongoDBReadConnection";
-import { MongoDBWriteConnection } from "../database/mongodb/MongoWriteDBConnection";
-
 // src/infrastructure/factories/DatabaseConnectionFactory.ts
 
+import { MongoDBConnection } from "../database/mongodb/MongoDBConnection";
+
 export class DatabaseConnectionFactory {
-  private static readConnection: IReadDatabaseConnection | null = null;
-  private static writeConnection: IWriteDatabaseConnection | null = null;
+  private static commandCreators: Map<string, () => MongoDBConnection> =
+    new Map();
+  private static queryCreators: Map<string, () => MongoDBConnection> =
+    new Map();
 
-  static createReadConnection(type: string): IReadDatabaseConnection {
-    if (!this.readConnection) {
-      if (type === "MongoDB") {
-        this.readConnection = new MongoDBReadConnection(
-          process.env.MONGO_READ_URI ?? ""
-        );
-      } else {
-        throw new Error(`Unknown read database type: ${type}`);
-      }
-    }
-
-    return this.readConnection;
+  static registerCommandConnectionType(
+    type: string,
+    creator: () => MongoDBConnection
+  ): void {
+    this.commandCreators.set(type, creator);
   }
 
-  static createWriteConnection(type: string): IWriteDatabaseConnection {
-    if (!this.writeConnection) {
-      if (type === "MongoDB") {
-        this.writeConnection = new MongoDBWriteConnection(
-          process.env.MONGO_WRITE_URI ?? ""
-        );
-      } else {
-        throw new Error(`Unknown write database type: ${type}`);
-      }
+  static registerQueryConnectionType(
+    type: string,
+    creator: () => MongoDBConnection
+  ): void {
+    this.queryCreators.set(type, creator);
+  }
+
+  static getCommandConnection(type: string): MongoDBConnection {
+    if (!this.commandCreators.has(type)) {
+      throw new Error(
+        `No command connection creator registered for type: ${type}`
+      );
     }
-    return this.writeConnection;
+    return this.commandCreators.get(type)!();
+  }
+
+  static getQueryConnection(type: string): MongoDBConnection {
+    if (!this.queryCreators.has(type)) {
+      throw new Error(
+        `No query connection creator registered for type: ${type}`
+      );
+    }
+    return this.queryCreators.get(type)!();
   }
 }

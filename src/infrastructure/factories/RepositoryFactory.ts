@@ -1,24 +1,30 @@
-import DIContainer from "../../shared/DIContainer";
-import { ReadRepository } from "../database/ReadRepository";
-import { WriteRepository } from "../database/WriteRepository";
-import { IReadDatabaseConnection } from "../database/interfaces/IReadDatabaseConnection";
-import { IReadRepository } from "../database/interfaces/IReadRepository";
-import { IWriteDatabaseConnection } from "../database/interfaces/IWriteDatabaseConnection";
-import { IWriteRepository } from "../database/interfaces/IWriteRepository";
+// src/infrastructure/factories/ConcreteRepositoryFactory.ts
+
+import { IDiContainer } from "../../shared/DIContainer";
+import { GenericRepository } from "../database/GenericRepository";
+import {
+  IReadRepository,
+  IWriteRepository,
+} from "../database/interfaces/IRepository";
+import { ITransactional } from "../database/interfaces/ITransactional";
 import { IRepositoryFactory } from "./interfaces/IRepositoryFactory";
 
 export class ConcreteRepositoryFactory implements IRepositoryFactory {
-  createReadRepository<T>(tableOrCollection: string): IReadRepository<T> {
-    const readDb = DIContainer.resolve<IReadDatabaseConnection>(
-      "IReadDatabaseConnection"
-    );
-    return new ReadRepository<T>(readDb, tableOrCollection);
-  }
+  constructor(private diContainer: IDiContainer) {}
 
-  createWriteRepository<T>(tableOrCollection: string): IWriteRepository<T> {
-    const writeDb = DIContainer.resolve<IWriteDatabaseConnection>(
-      "IWriteDatabaseConnection"
-    );
-    return new WriteRepository<T>(writeDb, tableOrCollection);
+  createRepository<T>(
+    collectionName: string,
+    connectionKey: string = "DatabaseConnection"
+  ): GenericRepository<T> {
+    const dbConnection = this.diContainer.resolve<
+      ITransactional & IReadRepository<T> & IWriteRepository<T>
+    >(connectionKey);
+    if (!dbConnection) {
+      throw new Error(
+        `Database connection '${connectionKey}' could not be resolved.`
+      );
+    }
+
+    return new GenericRepository<T>(dbConnection, collectionName);
   }
 }

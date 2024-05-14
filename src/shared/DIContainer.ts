@@ -1,17 +1,23 @@
-class DIContainer {
-  private static instances = new Map<string, unknown>();
+export interface IDiContainer {
+  register<T>(key: string, factory: () => T): void;
+  resolve<T>(key: string): T;
+}
 
-  static register<T>(name: string, instance: T): void {
-    DIContainer.instances.set(name, instance);
+class DIContainer implements IDiContainer {
+  private instances = new Map<string, () => unknown>();
+
+  register<T>(key: string, factory: () => T): void {
+    this.instances.set(key, factory);
   }
 
-  static resolve<T>(name: string): T {
-    const instance = DIContainer.instances.get(name);
-    if (!instance) {
-      throw new Error(`No instance found for ${name}`);
+  resolve<T>(key: string): T {
+    const factory = this.instances.get(key);
+    if (!factory) {
+      throw new Error(`No factory found for ${key}`);
     }
-    return instance as T;
+    return (factory as () => T)();
   }
 }
 
-export default DIContainer;
+const diContainer = new DIContainer();
+export default diContainer;
