@@ -1,30 +1,43 @@
-// src/infrastructure/factories/ConcreteRepositoryFactory.ts
-
-import { IDiContainer } from "../../shared/DIContainer";
-import { GenericRepository } from "../database/GenericRepository";
-import {
-  IReadRepository,
-  IWriteRepository,
-} from "../database/interfaces/IRepository";
-import { ITransactional } from "../database/interfaces/ITransactional";
-import { IRepositoryFactory } from "./interfaces/IRepositoryFactory";
+import { IDiContainer } from '../../shared/DIContainer';
+import { GenericCommandRepository } from '../database/GenericCommandRepository';
+import { GenericQueryRepository } from '../database/GenericQueryRepository';
+import { ICommandRepository } from '../database/interfaces/ICommandRepository';
+import { IQueryRepository } from '../database/interfaces/IQueryRepository';
+import { ITransactional } from '../database/interfaces/ITransactional';
+import { IRepositoryFactory } from './interfaces/IRepositoryFactory';
 
 export class ConcreteRepositoryFactory implements IRepositoryFactory {
   constructor(private diContainer: IDiContainer) {}
 
-  createRepository<T>(
-    collectionName: string,
-    connectionKey: string = "DatabaseConnection"
-  ): GenericRepository<T> {
+  createCommandRepository<T>(
+    tableOrCollectionName: string,
+    connectionKey: string = 'DatabaseConnectionWrite',
+  ): GenericCommandRepository<T> {
     const dbConnection = this.diContainer.resolve<
-      ITransactional & IReadRepository<T> & IWriteRepository<T>
+      ITransactional & ICommandRepository<T>
     >(connectionKey);
     if (!dbConnection) {
       throw new Error(
-        `Database connection '${connectionKey}' could not be resolved.`
+        `Database connection '${connectionKey}' could not be resolved.`,
       );
     }
 
-    return new GenericRepository<T>(dbConnection, collectionName);
+    return new GenericCommandRepository<T>(dbConnection, tableOrCollectionName);
+  }
+
+  createQueryRepository<T>(
+    tableOrCollectionName: string,
+    connectionKey: string = 'DatabaseConnectionRead',
+  ): GenericQueryRepository<T> {
+    const dbConnection = this.diContainer.resolve<
+      ITransactional & IQueryRepository<T>
+    >(connectionKey);
+    if (!dbConnection) {
+      throw new Error(
+        `Database connection '${connectionKey}' could not be resolved.`,
+      );
+    }
+
+    return new GenericQueryRepository<T>(dbConnection, tableOrCollectionName);
   }
 }

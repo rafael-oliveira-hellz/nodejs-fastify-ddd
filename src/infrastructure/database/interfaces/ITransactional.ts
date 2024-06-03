@@ -3,4 +3,5 @@ export interface ITransactional {
   commit(): Promise<void>;
   rollback(): Promise<void>;
   isConnected(): boolean;
+  disconnect(): Promise<void>;
 }

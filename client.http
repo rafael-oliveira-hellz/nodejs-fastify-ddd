@@ -1,0 +1,21 @@
+### Variables 
+@apiurl = http://127.0.0.1:5001/app-teste-ddd/api/v1
+@apiurl2 = http://127.0.0.1:5001/app-teste-ddd
+
+### GET users
+GET {{apiurl}}/users HTTP/1.1
+
+### POST users
+POST {{apiurl}}/users HTTP/1.1
+Content-Type: application/json
+# Authorization: Bearer ACCESS-TOKEN
+
+{
+   "username": "Tenali Ramakrishna 4",
+   "email": "tenali.ram4akrishnna@1dfce.com",
+   "password": "sodfofnfgh%dfher484"
+}
+
+### GET categories
+GET {{apiurl}}/actuator/prometheus HTTP/1.1
+Content-Type: application/json

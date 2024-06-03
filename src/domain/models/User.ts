@@ -5,7 +5,7 @@ export class User {
     public username: string,
     public email: string,
     public password: string,
-    id?: string
+    id?: string,
   ) {
     this.id = id;
   }

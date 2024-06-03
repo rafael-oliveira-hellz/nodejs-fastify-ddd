@@ -1,5 +1,12 @@
-import { GenericRepository } from "../../database/GenericRepository";
+import { GenericCommandRepository } from '../../../infrastructure/database/GenericCommandRepository';
+import { GenericQueryRepository } from '../../../infrastructure/database/GenericQueryRepository';
 
 export interface IRepositoryFactory {
-  createRepository<T>(tableOrCollection: string): GenericRepository<T>;
+  createCommandRepository<T>(
+    tableOrCollection: string,
+  ): GenericCommandRepository<T>;
+
+  createQueryRepository<T>(
+    tableOrCollection: string,
+  ): GenericQueryRepository<T>;
 }

@@ -6,10 +6,22 @@ export interface IDiContainer {
 class DIContainer implements IDiContainer {
   private instances = new Map<string, () => unknown>();
 
+  /**
+   * Register a factory function with a key in the container.
+   *
+   * @param {string} key - The key for the factory function.
+   * @param {() => T} factory - The factory function to be registered.
+   */
   register<T>(key: string, factory: () => T): void {
     this.instances.set(key, factory);
   }
 
+  /**
+   * Resolves the value associated with the key from the container.
+   *
+   * @param {string} key - The key to resolve the value.
+   * @return {T} The resolved value.
+   */
   resolve<T>(key: string): T {
     const factory = this.instances.get(key);
     if (!factory) {

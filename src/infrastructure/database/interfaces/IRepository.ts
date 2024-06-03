@@ -1,15 +1,22 @@
 export interface IReadRepository<T> {
-  findOne(collectionName: string, criteria: Partial<T>): Promise<T | null>;
-  findById(collectionName: string, id: string | number): Promise<T | null>;
-  findAll(collectionName: string, criteria: Partial<T>): Promise<T[]>;
+  findOne(
+    tableOrCollectionName: string,
+    criteria: Partial<T>,
+  ): Promise<T | null>;
+  findById(
+    tableOrCollectionName: string,
+    id: string | number,
+  ): Promise<T | null>;
+  findAll(tableOrCollectionName: string, criteria: Partial<T>): Promise<T[]>;
 }
 
 export interface IWriteRepository<T> {
-  create(collectionName: string, entity: T): Promise<void>;
+  create(tableOrCollectionName: string, entity: Partial<T>): Promise<T>;
   update(
-    collectionName: string,
+    tableOrCollectionName: string,
     id: string | number,
-    entity: Partial<T>
+    entity: Partial<T>,
+    options?: object,
   ): Promise<void>;
-  delete(collectionName: string, id: string | number): Promise<void>;
+  delete(tableOrCollectionName: string, id: string | number): Promise<void>;
 }

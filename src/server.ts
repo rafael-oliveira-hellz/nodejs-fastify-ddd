@@ -1,17 +1,74 @@
-import Fastify from "fastify";
-import { userRoutes } from "./presentation/controllers/UserController";
-import { configureDIContainer } from "./shared/ConfigureDIContainer";
+import cookieParser from '@fastify/cookie';
+import cors from '@fastify/cors';
+import formbody from '@fastify/formbody';
+import helmet from '@fastify/helmet';
+import fastifyRequestContext from '@fastify/request-context';
+import Fastify, {
+  FastifyInstance,
+  FastifyReply,
+  FastifyRequest,
+  HookHandlerDoneFunction,
+} from 'fastify';
+import { IncomingMessage, Server, ServerResponse } from 'http';
+import { addMonitoringHooks, metrics } from './config/prometheus';
+import { routes } from './presentation/routes';
 
-const server = Fastify({ logger: true });
+/**
+ * Creates and configures a Fastify server instance with various routes and hooks.
+ *
+ * @return {FastifyInstance} The configured Fastify server instance.
+ */
+export const createApp = (): FastifyInstance => {
+  const server: FastifyInstance<Server, IncomingMessage, ServerResponse> =
+    Fastify({ logger: true });
 
-configureDIContainer();
+  server.register(fastifyRequestContext);
+  server.register(cors, {});
+  server.register(cookieParser, {});
+  server.register(formbody);
+  server.register(helmet, {
+    contentSecurityPolicy: {
+      directives: {
+        defaultSrc: ["'self'"],
+        objectSrc: ["'none'"],
+        upgradeInsecureRequests: [],
+      },
+    },
+  });
 
-server.register(userRoutes);
+  function logRequest(
+    req: FastifyRequest,
+    res: FastifyReply,
+    done: HookHandlerDoneFunction,
+  ) {
+    const { method, url } = req.raw;
+    const { statusCode } = res;
 
-server.listen({ port: 3000 }, (err, address) => {
-  if (err) {
-    console.error(err);
-    process.exit(1);
+    const start = process.hrtime();
+
+    res.raw.on('finish', () => {
+      const [sec, nanosec] = process.hrtime(start);
+      const responseTime = (sec * 1000 + nanosec / 1e6).toFixed(2);
+
+      server.log.info(`${method} ${url} ${statusCode} ${responseTime}ms`);
+    });
+
+    done();
   }
-  console.log(`Server listening at ${address}`);
-});
+
+  server.addHook('onRequest', logRequest);
+
+  addMonitoringHooks(server);
+
+  // setUpSwagger(server, `/${process.env.CONTEXT}/api/v1`);
+
+  server.register(routes, { prefix: `/${process.env.CONTEXT}/api/v1` });
+  server.get('/metrics', metrics);
+
+  server.ready((err) => {
+    if (err) throw err;
+    console.log(server.printRoutes());
+  });
+
+  return server;
+};

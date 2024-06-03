@@ -1,0 +1,132 @@
+version: '3.8'
+
+services:
+  tempo:
+    image: grafana/tempo:latest
+    container_name: grafana-tempo
+    ports:
+      - '4317:4317'
+      - '4318:4318'
+      - '3200:3200'
+    volumes:
+      - ./tempo-data:/var/lib/grafana
+      - ./tempo.yaml:/etc/tempo.yaml
+    command: ['/tempo', '--config.file=/etc/tempo.yaml']
+    networks:
+      - fastify_chassi_network
+
+  mongo:
+    image: mongo:latest
+    container_name: mongo
+    ports:
+      - '27017:27017'
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: example
+    volumes:
+      - mongo-data:/data/db
+    networks:
+      - fastify_chassi_network
+
+  redis:
+    image: redis:latest
+    container_name: redis
+    ports:
+      - '6379:6379'
+    volumes:
+      - redis-data:/data
+    networks:
+      - fastify_chassi_network
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: rabbitmq
+    ports:
+      - '5672:5672'
+      - '15672:15672'
+    environment:
+      RABBITMQ_DEFAULT_USER: user
+      RABBITMQ_DEFAULT_PASS: password
+    volumes:
+      - rabbitmq-data:/var/lib/rabbitmq
+    networks:
+      - fastify_chassi_network
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    ports:
+      - '3000:3000'
+    volumes:
+      - grafana-storage:/var/lib/grafana
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    networks:
+      - fastify_chassi_network
+
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus
+    ports:
+      - '9090:9090'
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+    networks:
+      - fastify_chassi_network
+
+  api:
+    image: node:latest
+    container_name: api
+    working_dir: /app
+    volumes:
+      - .:/app
+    command: yarn start
+    ports:
+      - '5001:5001'
+    environment:
+      MONGO_WRITE_URI: 'mongodb://root:example@mongo:27017/?authSource=admin'
+      MONGO_READ_URI: 'mongodb://root:example@mongo:27017/?authSource=admin'
+      CONTEXT: 'app-teste-ddd'
+      RABBITMQ_URI: 'amqp://user:password@rabbitmq:5672'
+      CACHE_URI: 'redis://redis:6379'
+      REDIS_URL: 'redis://redis:6379'
+      REDIS_HOST: 'redis'
+      REDIS_PORT: 6379
+      REDIS_USERNAME: ''
+      REDIS_PASSWORD: ''
+      APP_PORT: 5001
+      OBSERVABILITY_LOCAL: false
+      NODE_ENV: development
+      JWT_SECRET: 'secret'
+    depends_on:
+      - mongo
+      - redis
+      - rabbitmq
+      - tempo
+      - grafana
+      - prometheus
+    healthcheck:
+      test:
+        [
+          'CMD',
+          'curl',
+          '-f',
+          'http://localhost:5001/app-teste-ddd/api/v1/actuator/health',
+        ]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    networks:
+      - fastify_chassi_network
+
+volumes:
+  mongo-data:
+  redis-data:
+  rabbitmq-data:
+  tempo-data:
+  grafana-storage:
+
+networks:
+  fastify_chassi_network:
+    name: fastify_chassi_network
+    driver: bridge

@@ -1,26 +1,17 @@
-import { IUserCommandRepository } from "../../../domain/contracts/IUserCommandRepository";
-import { User } from "../../../domain/entities/User";
-import { IRepositoryFactory } from "../../../infrastructure/factories/interfaces/IRepositoryFactory";
-import DIContainer from "../../../shared/DIContainer";
-import { Transactional } from "../../decorators/TransactionDecorator";
-import { CreateUserCommand } from "../CreateUserCommand";
+import { User } from '../../../domain/models/User';
+import { GenericCommandRepository } from '../../../infrastructure/database/GenericCommandRepository';
+import { Transactional } from '../../decorators/TransactionDecorator';
+import { CreateUserCommand } from '../CreateUserCommand';
+import { ICommandHandler } from '../contracts/ICommandHandler';
 
-export class CreateUserCommandHandler {
-  private userCommandRepository: IUserCommandRepository;
+export class CreateUserCommandHandler
+  implements ICommandHandler<CreateUserCommand, User>
+{
+  public repository: GenericCommandRepository<User>;
 
-  /**
-   * Constructor for the class.
-   *
-   * This constructor initializes the `userCommandRepository` property by resolving an instance of `IRepositoryFactory` from the `DIContainer` and creating a repository for `User` entities with the collection name "users".
-   *
-   * @return {void}
-   */
-  constructor() {
-    const factory =
-      DIContainer.resolve<IRepositoryFactory>("IRepositoryFactory");
-    this.userCommandRepository = factory.createRepository<User>("users");
+  constructor(userCommandRepository: GenericCommandRepository<User>) {
+    this.repository = userCommandRepository;
   }
-
   /**
    * Handles the given CreateUserCommand by creating a new User entity with the provided username, email, and password,
    * and then saving it to the userCommandRepository.
@@ -28,11 +19,11 @@ export class CreateUserCommandHandler {
    * @param {CreateUserCommand} command - The CreateUserCommand to handle.
    * @return {Promise<void>} A Promise that resolves when the user is successfully created and saved.
    */
-  @Transactional()
-  async handle(command: CreateUserCommand): Promise<void> {
+  @Transactional<CreateUserCommand, User>()
+  async handle(command: CreateUserCommand): Promise<User> {
     const { username, email, password } = command.dto;
     const user = new User(username, email, password);
 
-    return this.userCommandRepository.create(user);
+    return await this.repository.create('users', user);
   }
 }

@@ -1,5 +1,5 @@
-import { IMessageBroker } from "../../messaging/interfaces/IMessageBroker";
+import { IMessageBroker } from '../../messaging/interfaces/IMessageBroker';
 
 export interface IMessageBrokerFactory {
-  createMessageBroker(): IMessageBroker;
+  createMessageBroker(connectionKey: string): IMessageBroker;
 }
